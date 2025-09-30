@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% load static %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/organization/dashboard.css' %}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+{% endblock %}
+{% block title %}Organization Dashboard{% endblock %}
+{% block content %}
+
+<div class="container mt-4">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <h2 class="text-center mb-4">📋 Donations Made </h2>
+    <div class="d-flex flex-direction-row justify-content-start">
+        {{ logistic }}
+        <form method="GET" class="w-100 d-flex flex-row">
+            <a href="{% url 'search_requests' %}" class="btn btn-secondary m-2">Add new Donation</a>
+            
+            
+            <div class="dropdown">
+                <button class="btn btn-secondary m-2 dropdown-toggle" id="sortButton" data-bs-toggle="dropdown" aria-expanded="false">
+                    Sort by
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="sortButton">
+                    <li><a class="dropdown-item sort-option" data-value="name">Name</a></li>
+                    <li><a class="dropdown-item sort-option" data-value="resource">Resource</a></li>
+                    <li><a class="dropdown-item sort-option" data-value="quantity">Quantity</a></li>
+                </ul>
+            </div>
+            <div class="dropdown">
+                <button class="btn btn-secondary m-2 dropdown-toggle" id="filterTypeButton" data-bs-toggle="dropdown" aria-expanded="false">
+                    Filter by
+                </button>
+                <ul class="dropdown-menu" id="filterTypeMenu">
+                    <li><a class="dropdown-item filter-option" data-value="quantity">Quantity</a></li>
+                    <li><a class="dropdown-item filter-option" data-value="name">Name</a></li>
+                    <li><a class="dropdown-item filter-option" data-value="resource">Resource</a></li>
+                </ul>
+            </div>
+            <input type="hidden" name="sort" id="sortInput" value="{{ request.GET.sort }}">
+            <input type="hidden" name="filter_type" id="filterTypeInput" value="{{ request.GET.filter_type }}">
+            <input type="text" name="filter_value" id="filterInput" class="m-2" placeholder="Enter filter keyword..." value="{{ request.GET.filter_value }}">
+            <button type="submit" class="btn btn-primary m-2">Apply</button>
+        </form>
+    </div>
+    {% if donations %}
+    <div class="row">
+        {% for request in donations %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card shadow-sm mb-4">
+                {% if request.pic %}
+                    <img src="{{ request.pic.url }}" class="card-img-top image-view" alt="{{ request.name }}">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="bi bi-box"></i> {{ request.name }}
+                    </h5>
+                    <p class="card-text"><i class="bi bi-file-text"></i> {{ request.description }}</p>
+                    <p class="fw-bold">
+                        <i class="bi bi-hash"></i> Quantity: {{ request.quantity }}
+                    </p>
+                    <p class="fw">
+                        <i class="bi bi-person"></i> Donated by: you
+                    </p>
+                    {% if request.donated_to is not None %}
+                        <p class="fw">
+                            <i class="bi bi-box-seam" data-bs-toggle="tooltip" title="Resource Type"></i> Donated to : {{ request.donated_to.name }}({{ request.donated_to.created_by.user.username }})
+                        </p>
+                    {% endif %}
+                </div>
+                <div class="w-100 d-flex flex-row gap-2 m-2">
+                    {% if request.donated_to is None %}
+                        <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ request.rid }}" data-bs-toggle="tooltip" title="Delete">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                        <a href="{% url 'update_donation' request.rid %}" class="btn btn-warning" data-bs-toggle="tooltip" title="Update">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                    {% else %}
+                    <a href="{% url 'logistic_status' request.donated_to.rid%}" class="btn btn-primary" data-bs-toggle="tooltip" title="See status">
+                        <i class="bi bi-eye"></i>
+                    </a>
+                    {% endif %}
+                </div>
+                <div class="modal fade" id="deleteModal{{ request.rid }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ request.rid }}" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="deleteModalLabel{{ request.rid }}">Confirm Deletion</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                Are you sure you want to delete "{{ request.name }}"? This action cannot be undone.
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <a href="{% url 'donation_delete' request.rid %}" class="btn btn-danger">Delete</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="alert alert-warning text-center">
+        🚫 No delivery requests.
+    </div>
+{% endif %}
+
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    
+        // Handle Sort Options
+        const sortOptions = document.querySelectorAll(".sort-option");
+        const filterOptions = document.querySelectorAll(".filter-option");
+        const sortInput = document.getElementById("sortInput");
+        const filterTypeInput = document.getElementById("filterTypeInput");
+        const filterInput = document.getElementById("filterInput");
+        const form = document.querySelector("form");
+    
+        // Handle Sort option clicks
+        sortOptions.forEach(option => {
+            console.log(option)
+            option.addEventListener("click", function () {
+                sortInput.value = this.getAttribute("data-value"); // Update hidden sort input value
+                sortButton.innerText = sortButton.innerText + sortInput.value
+            });
+        });
+    
+        // Handle Filter option clicks
+        filterOptions.forEach(option => {
+            console.log(option)
+            option.addEventListener("click", function () {
+                filterTypeInput.value = this.getAttribute("data-value"); // Update hidden filter type
+                filterTypeButton.innerText = filterTypeButton.innerText + filterTypeInput.value
+            });
+        });
+        document.getElementById("confirmDelete").addEventListener("click", function() {
+            // Perform delete action (e.g., API call or form submission)
+            alert("Item deleted successfully!");  // Replace this with actual delete logic
+            var modal = new bootstrap.Modal(document.getElementById("deleteModal"));
+            modal.hide();  // Hide the modal after action
+        });
+    
+        // Optional: Trigger form submission when user types in the filter input
+    });
+    
+</script>
+{% endblock %}

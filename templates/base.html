@@ -1,0 +1,155 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Unite to Uplift{% endblock %}</title>
+    
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="light-mode">
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark" id="navbar">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'home' %}">Unite to Uplift</a>
+            {% if user %}
+            {% if user.profile_picture and user.profile_picture.url %}
+                <img src="{{ user.profile_picture.url }}" class="navbar-profile"/>
+            {% endif %}
+            <a class="nav-link text-center" href="{% url 'edit_profile' %}">Welcome {{ user.username }}</a>
+            {% endif %}
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+
+                   
+                    
+                    <li class="nav-item"><a class="nav-link" href="{% url 'home' %}">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'auth_login' %}">Login</a></li>
+                    <li class="nav-item" >
+                        <button class=" nav-link" data-bs-toggle="modal" data-bs-target="#signupModal">
+                            Signup
+                        </button>
+                    </li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}">logout</a></li>
+                    
+                </ul>
+
+                <!-- Dark Mode Toggle Button -->
+                <button class="btn btn-outline-light ms-3" id="theme-toggle">
+                    🌙 Dark Mode
+                </button>
+            </div>
+        </div>
+        <div class="modal fade" id="signupModal" tabindex="-1" aria-labelledby="signupModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="signupModalLabel">Choose Signup Type</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <p>Are you signing up as a Donor , an Organization or a Logistic Partner?</p>
+                        <a href="{% url 'auth_signup_donor' %}" class="btn btn-success">Donor</a>
+                        <a href="{% url 'auth_signup_organization' %}" class="btn btn-info">Organization</a>
+                        <a href="{% url 'auth_signup_logistic' %}" class="btn btn-info">Logistic Partner</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </nav>
+
+    <!-- Page Content -->
+    <div class="container container-height mt-4">
+        {% block content %}{% endblock %}
+    </div>
+    <!-- Toast Notification Container -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050">
+        {% for message in messages %}
+        <div id="toast{{ forloop.counter }}" class="toast align-items-center text-white {% if message.tags == 'error' %}bg-danger{% else %}bg-success{% endif %} border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="10000">
+            <div class="d-flex">
+                <div class="toast-body">
+                    {{ message }}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center mt-5 py-3 bg-light text-dark position-relative" id="footer">
+        <p>&copy; 2025 My Website</p>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Theme Toggle Script -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const themeToggle = document.getElementById("theme-toggle");
+            const body = document.body;
+            const navbar = document.getElementById("navbar");
+            const footer = document.getElementById("footer");
+
+            // Load saved theme
+            if (localStorage.getItem("theme") === "dark") {
+                body.classList.remove("light-mode");
+                body.classList.add("dark-mode");
+                navbar.classList.remove("navbar-dark", "bg-dark");
+                navbar.classList.add("navbar-light", "bg-light");
+                footer.classList.add("bg-dark", "text-light");
+                themeToggle.innerHTML = "☀️ Light Mode";
+                themeToggle.classList.remove("btn-outline-light");
+                themeToggle.classList.add("btn-outline-dark");
+            }
+
+            // Toggle theme
+            themeToggle.addEventListener("click", function () {
+                if (body.classList.contains("dark-mode")) {
+                    // Switch to light mode
+                    body.classList.remove("dark-mode");
+                    body.classList.add("light-mode");
+                    navbar.classList.remove("navbar-light", "bg-light");
+                    navbar.classList.add("navbar-dark", "bg-dark");
+                    footer.classList.remove("bg-dark", "text-light");
+                    footer.classList.add("bg-light", "text-dark");
+                    themeToggle.innerHTML = "🌙 Dark Mode";
+                    themeToggle.classList.remove("btn-outline-dark");
+                    themeToggle.classList.add("btn-outline-light");
+                    localStorage.setItem("theme", "light");
+                } else {
+                    // Switch to dark mode
+                    body.classList.remove("light-mode");
+                    body.classList.add("dark-mode");
+                    navbar.classList.remove("navbar-dark", "bg-dark");
+                    navbar.classList.add("navbar-light", "bg-light");
+                    footer.classList.remove("bg-light", "text-dark");
+                    footer.classList.add("bg-dark", "text-light");
+                    themeToggle.innerHTML = "☀️ Light Mode";
+                    themeToggle.classList.remove("btn-outline-light");
+                    themeToggle.classList.add("btn-outline-dark");
+                    localStorage.setItem("theme", "dark");
+                }
+            });
+            const toastElements = document.querySelectorAll(".toast");
+            toastElements.forEach(toastElement => {
+                const toast = new bootstrap.Toast(toastElement);
+                toast.show(); // Show each toast message
+            });
+        });
+    </script>
+</body>
+</html>
